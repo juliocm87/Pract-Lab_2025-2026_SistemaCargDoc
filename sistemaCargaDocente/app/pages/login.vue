@@ -14,7 +14,6 @@ function handleClose() {
 }
 
 definePageMeta({
-    layout: false
-    // Se eliminó la configuración de auth para evitar errores de compilación
+    layout: 'auth'
 });
 </script>
