@@ -1,161 +1,153 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">Sobrecarga Docente</h1>
-        <p class="text-gray-600">{{ getCurrentMonth() }} de {{ getCurrentYear() }}</p>
-      </div>
+  <div class="min-h-screen bg-slate-50 pb-12">
+    <div class="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
+      <section class="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_25px_50px_-20px_rgba(15,23,42,0.15)]">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-sm uppercase tracking-[0.35em] text-slate-400">Carga docente</p>
+            <h1 class="mt-3 text-3xl font-semibold text-slate-900">Gestionar cargas docentes</h1>
+            <p class="mt-2 text-sm text-slate-600">{{ departamentoTexto }}</p>
+          </div>
+          <div class="rounded-full border border-slate-200 bg-white px-5 py-3 shadow-sm">
+            <p class="text-xs uppercase tracking-[0.35em] text-slate-500">Periodo actual</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900">{{ getCurrentMonth() }} {{ getCurrentYear() }}</p>
+          </div>
+        </div>
 
-      <!-- Contenedor principal con tabla y panel de detalles -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Tabla de actividades -->
-        <div class="lg:col-span-2">
-          <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <table class="w-full">
-              <thead class="bg-blue-600 text-white">
+        <div class="mt-8 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.35em] text-slate-500">Centro de control</p>
+              <p class="mt-2 text-sm text-slate-600">Revisa las cargas docentes registradas este mes.</p>
+            </div>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                v-model="searchTerm"
+                type="search"
+                placeholder="Buscar trabajador"
+                class="w-full rounded-full border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-72"
+              />
+              <select
+                v-model="estadoFiltro"
+                class="rounded-full border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="">Todos los estados</option>
+                <option value="Revisada">Revisada</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Rechazada">Rechazada</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white">
+            <table class="min-w-full text-left text-sm">
+              <thead class="bg-slate-100 text-slate-500">
                 <tr>
-                  <th class="px-4 py-3 text-left text-sm font-semibold w-12">No</th>
-                  <th class="px-4 py-3 text-left text-sm font-semibold">Actividades</th>
-                  <th class="px-4 py-3 text-center text-sm font-semibold w-24">Horas</th>
+                  <th class="px-6 py-4 font-semibold uppercase tracking-[0.2em]">Trabajador</th>
+                  <th class="px-6 py-4 font-semibold uppercase tracking-[0.2em]">Estado</th>
+                  <th class="px-6 py-4 text-right font-semibold uppercase tracking-[0.2em]">Acción</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="(actividad, index) in actividades" :key="actividad.id"
-                  @click="selectActividad(actividad)"
-                  :class="[
-                    'border-b hover:bg-blue-50 cursor-pointer transition-colors',
-                    selectedActividad?.id === actividad.id ? 'bg-blue-100' : ''
-                  ]">
-                  <td class="px-4 py-3 text-sm text-gray-900 font-semibold">{{ index + 1 }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900">{{ actividad.nombre }}</td>
-                  <td class="px-4 py-3 text-center">
-                    <input v-model.number="actividad.horas" type="number" min="0"
-                      @click.stop
-                      class="w-20 px-2 py-1 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <tbody class="divide-y divide-slate-200 bg-white">
+                <tr v-for="trabajador in trabajadoresFiltrados" :key="trabajador.id" class="hover:bg-slate-50">
+                  <td class="px-6 py-4 font-medium text-slate-900">{{ trabajador.nombre }}</td>
+                  <td class="px-6 py-4">
+                    <span :class="['rounded-full px-3 py-1 text-xs font-semibold', trabajador.estado === 'Revisada' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700']">
+                      {{ trabajador.estado }}
+                    </span>
                   </td>
-                </tr>
-                <!-- Fila de Total -->
-                <tr class="bg-blue-100 font-bold border-t-2 border-blue-600">
-                  <td colspan="2" class="px-4 py-3 text-sm text-gray-900">Total de Horas</td>
-                  <td class="px-4 py-3 text-center text-sm text-gray-900">{{ totalHoras }}</td>
+                  <td class="px-6 py-4 text-right">
+                    <button
+                      type="button"
+                      class="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-600 hover:text-white"
+                    >
+                      Revisar
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          <!-- Texto de cálculo de carga -->
-          <div class="mt-6 bg-white rounded-lg shadow p-4">
-            <p class="text-gray-700 font-semibold">
-              Cálculo de la carga docente (≤114h/m)
-            </p>
-            <p class="text-sm text-gray-600 mt-2">
-              Horas totales: <span class="font-bold text-blue-600">{{ totalHoras }}h/m</span>
-              <span v-if="totalHoras <= 114" class="text-green-600 ml-4">✓ Dentro del límite permitido</span>
-              <span v-else class="text-red-600 ml-4">✗ Excede el límite permitido</span>
-            </p>
-          </div>
         </div>
-
-        <!-- Panel de detalles -->
-        <div class="lg:col-span-1">
-          <div v-if="selectedActividad" class="bg-white rounded-lg shadow-lg p-6 sticky top-24">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Detalles</h2>
-            
-            <div class="mb-6">
-              <h3 class="text-sm font-semibold text-gray-700 mb-2">Actividad</h3>
-              <p class="text-gray-900">{{ selectedActividad.nombre }}</p>
-            </div>
-
-            <div class="mb-6">
-              <h3 class="text-sm font-semibold text-gray-700 mb-2">Horas Dedicadas</h3>
-              <input v-model.number="selectedActividad.horas" type="number" min="0"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-
-            <div class="mb-6">
-              <h3 class="text-sm font-semibold text-gray-700 mb-2">Descripción</h3>
-              <textarea v-model="selectedActividad.descripcion"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows="4"
-                placeholder="Añade notas sobre esta actividad..."></textarea>
-            </div>
-
-            <button @click="guardarActividad"
-              class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300">
-              Guardar Cambios
-            </button>
-
-            <button @click="selectedActividad = null"
-              class="w-full mt-2 bg-gray-300 text-gray-900 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors duration-300">
-              Cerrar
-            </button>
-          </div>
-
-          <div v-else class="bg-white rounded-lg shadow-lg p-6 sticky top-24 text-center">
-            <p class="text-gray-500">Selecciona una actividad para ver sus detalles</p>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 definePageMeta({
   layout: 'default'
 })
 
-interface Actividad {
-  id: number
-  nombre: string
-  horas: number
-  descripcion: string
+const { api, getUserFromToken } = useApi()
+const { showError } = useNotifications()
+const trabajadores = ref<any[]>([])
+const estadoFiltro = ref('')
+const searchTerm = ref('')
+const isLoading = ref(false)
+const errorMessage = ref('')
+const currentUser = ref<any>(null)
+
+const formatEstado = (estado: string) => {
+  if (estado === 'aceptado') return 'Revisada'
+  if (estado === 'rechazado') return 'Rechazada'
+  return 'Pendiente'
 }
 
-const actividades = ref<Actividad[]>([
-  { id: 1, nombre: 'Docencia en pregrado y posgrado', horas: 0, descripcion: '' },
-  { id: 2, nombre: 'Preparación de la asignatura de pregrado y posgrado, presencial y entornos virtuales', horas: 0, descripcion: '' },
-  { id: 3, nombre: 'Calificación de exámenes', horas: 0, descripcion: '' },
-  { id: 4, nombre: 'Trabajo docente - metodológico', horas: 0, descripcion: '' },
-  { id: 5, nombre: 'Tutoría de práctica preprofesional, de trabajos de cursos y de proyectos de curso', horas: 0, descripcion: '' },
-  { id: 6, nombre: 'Tutoría de trabajos de diplomas', horas: 0, descripcion: '' },
-  { id: 7, nombre: 'Tutoría de otras formas de culminación de estudios', horas: 0, descripcion: '' },
-  { id: 8, nombre: 'Tutoría de tesis de maestría y de especialidad', horas: 0, descripcion: '' },
-  { id: 9, nombre: 'Tutoría de tesis de doctorado', horas: 0, descripcion: '' },
-  { id: 10, nombre: 'Presidente Comisión Nacional de Carrera', horas: 0, descripcion: '' },
-  { id: 11, nombre: 'Jefe de Colectivo de carrera', horas: 0, descripcion: '' },
-  { id: 12, nombre: 'Jefe de Disciplina', horas: 0, descripcion: '' },
-  { id: 13, nombre: 'Jefe de Asignatura', horas: 0, descripcion: '' },
-  { id: 14, nombre: 'Profesor Guía', horas: 0, descripcion: '' }
-])
+const cargarTrabajadores = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
 
-const selectedActividad = ref<Actividad | null>(null)
+  try {
+    const mes = String(new Date().getMonth() + 1)
+    const anno = String(new Date().getFullYear())
+    const response = await api(`/carga-docente/trabajadores-con-carga-docente/${mes}/${anno}`)
+    const rows = Array.isArray(response?.rows) ? response.rows : []
 
-const totalHoras = computed(() => {
-  return actividades.value.reduce((sum, act) => sum + (act.horas || 0), 0)
+    trabajadores.value = rows.map((item: any) => {
+      const trabajador = item.docente?.trabajador || item.docente?.trabajadore
+      const nombreCompleto = [trabajador?.nombre, trabajador?.apellido].filter(Boolean).join(' ')
+      return {
+        id: item.id,
+        nombre: nombreCompleto || 'Sin nombre',
+        estado: formatEstado(item.estado)
+      }
+    })
+  } catch (error) {
+    errorMessage.value = 'No se pudieron cargar las cargas docentes desde el backend.'
+    showError(errorMessage.value)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const trabajadoresFiltrados = computed(() => {
+  const term = searchTerm.value.toLowerCase()
+
+  return trabajadores.value.filter((trabajador) => {
+    const matchesStatus = !estadoFiltro.value || trabajador.estado === estadoFiltro.value
+    const matchesSearch = !term || trabajador.nombre.toLowerCase().includes(term)
+    return matchesStatus && matchesSearch
+  })
 })
 
-const selectActividad = (actividad: Actividad) => {
-  selectedActividad.value = actividad
-}
+onMounted(() => {
+  currentUser.value = getUserFromToken()
+  cargarTrabajadores()
+})
 
-const guardarActividad = () => {
-  // La reactividad ya actualiza automáticamente los datos
-  // Este método podría enviar datos a una API en el futuro
-  console.log('Actividad actualizada:', selectedActividad.value)
-}
+const departamentoTexto = computed(() => {
+  const departamento = currentUser.value?.departamento || currentUser.value?.docente?.departamento
+  if (!departamento) return 'Sin departamento asignado'
+  return departamento.startsWith('Departamento de') ? departamento : `Departamento de ${departamento}`
+})
 
 const getCurrentMonth = () => {
-  const months = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ]
+  const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   return months[new Date().getMonth()]
 }
 
-const getCurrentYear = () => {
-  return new Date().getFullYear()
-}
+const getCurrentYear = () => new Date().getFullYear()
 </script>

@@ -11,6 +11,10 @@
       </div>
       
       <form @submit.prevent="handleSubmit" class="space-y-6">
+        <p v-if="errorMessage" class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+          {{ errorMessage }}
+        </p>
+
         <div>
           <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
           <input
@@ -75,28 +79,45 @@
 </template>
 
 <script setup>
-// 1. Borramos la línea de const { $toast } = useNuxtApp();
 const router = useRouter();
+const { api, setAuthToken } = useApi();
 
 const username = ref('');
 const password = ref('');
 const isLoading = ref(false);
 const showPassword = ref(false);
+const errorMessage = ref('');
 
 const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
 
 const handleSubmit = async () => {
+  if (!username.value || !password.value) {
+    errorMessage.value = 'Debe completar usuario y contraseña';
+    return;
+  }
+
   isLoading.value = true;
-  
-  // Simulamos una espera de 1 segundo
-  setTimeout(() => {
+  errorMessage.value = '';
+
+  try {
+    const response = await api('/auth/login', {
+      method: 'POST',
+      body: {
+        nombre_usuario: username.value,
+        contrasena: password.value
+      }
+    });
+
+    setAuthToken(response.accessToken);
+    router.push('/dashboard');
+  } catch (error) {
+    const err = error && typeof error === 'object' && 'data' in error ? error : {};
+    errorMessage.value = err.data?.message || 'No se pudo iniciar sesión';
+  } finally {
     isLoading.value = false;
-    // 2. Usamos un alert nativo del navegador en lugar del toast
-    alert('¡Login visual exitoso!'); 
-    router.push('/');
-  }, 1000);
+  }
 };
 
 defineEmits(['close']);
